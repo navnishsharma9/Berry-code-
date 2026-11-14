@@ -7,7 +7,8 @@ import { initTestimonialsCarousel } from './components/testimonialsCarousel.js';
 import { renderFeaturedModal } from './components/modal.js';
 import { renderProductDetailPage } from './components/productPage.js';
 import { renderCartDrawer } from './components/cartDrawer.js';
-import { brandMarkSvg, iconCheckCircle } from './components/icons.js';
+import { brandMarkSvg, iconArrowRight, iconCheckCircle } from './components/icons.js';
+import { validateSubscriptionEmail } from './utils/emailValidation.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -439,49 +440,86 @@ window.addEventListener('keydown', (e) => {
 document.getElementById('footer-year').textContent = String(new Date().getFullYear());
 const newsletterContainer = document.getElementById('newsletter-container');
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function bindNewsletterForm() {
   const form = document.getElementById('newsletter-form');
   const emailInput = document.getElementById('newsletter-email');
   const errorEl = document.getElementById('newsletter-error');
-  if (!form) return;
+  if (!form || !emailInput || !errorEl) return;
 
-  emailInput.addEventListener('input', () => {
+  function clearErrorState() {
     errorEl.classList.add('hidden');
-  });
+    errorEl.innerHTML = '';
+    emailInput.removeAttribute('aria-invalid');
+    emailInput.removeAttribute('aria-describedby');
+    emailInput.classList.remove('border-rose-500');
+    emailInput.classList.add('border-slate-700');
+  }
+
+  emailInput.addEventListener('input', clearErrorState);
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const val = emailInput.value.trim();
-    if (!val || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-      errorEl.textContent = 'Please enter a valid engineering or work email address.';
+    const result = validateSubscriptionEmail(emailInput.value);
+
+    if (!result.valid) {
+      errorEl.innerHTML = `
+        <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        <span>${escapeHtml(result.error || 'Please enter a valid email address.')}</span>
+      `;
       errorEl.classList.remove('hidden');
+      emailInput.setAttribute('aria-invalid', 'true');
+      emailInput.setAttribute('aria-describedby', 'newsletter-error');
+      emailInput.classList.remove('border-slate-700');
+      emailInput.classList.add('border-rose-500');
+      emailInput.focus();
       return;
     }
 
     newsletterContainer.innerHTML = `
-      <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+      <div id="newsletter-success-card" role="status" aria-live="polite" class="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 space-y-2">
         <div class="flex items-center gap-2 text-sm font-medium text-emerald-400">
           ${iconCheckCircle('w-4 h-4')}
-          <span>Subscribed for release notes</span>
+          <span>Successfully subscribed to release notes</span>
         </div>
-        <p class="text-xs text-slate-400">
-          Confirmation sent to <span class="text-slate-200">${val}</span>.
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Confirmation sent to <span class="text-white font-medium">${escapeHtml(result.normalizedEmail)}</span>.
         </p>
-        <button type="button" id="newsletter-reset-btn" class="text-xs text-slate-400 underline hover:text-white">
+        <button type="button" id="newsletter-reset-btn" class="text-xs text-slate-400 underline hover:text-white transition-colors">
           Change email address
         </button>
       </div>
     `;
 
+    const successCard = document.getElementById('newsletter-success-card');
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (successCard && !prefersReduced) {
+      gsap.fromTo(
+        successCard,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.28, ease: 'power2.out', clearProps: 'transform,opacity' }
+      );
+    }
+
     document.getElementById('newsletter-reset-btn').addEventListener('click', () => {
       newsletterContainer.innerHTML = `
-        <form id="newsletter-form" novalidate class="space-y-2">
+        <form id="newsletter-form" novalidate class="space-y-2.5">
           <div class="flex flex-col sm:flex-row gap-2">
             <label for="newsletter-email" class="sr-only">Email address</label>
             <input
               id="newsletter-email"
               type="email"
-              placeholder="engineer@company.com"
+              placeholder="name@gmail.com or work@domain.com"
               class="w-full sm:flex-1 h-11 min-h-[44px] py-2.5 px-4 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-rose-500 focus-visible:ring-2 focus-visible:ring-rose-500 transition-colors"
             />
             <button
@@ -489,9 +527,10 @@ function bindNewsletterForm() {
               class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-11 min-h-[44px] px-5 rounded-lg bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition-colors whitespace-nowrap shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
             >
               <span>Subscribe</span>
+              ${iconArrowRight('w-4 h-4')}
             </button>
           </div>
-          <p id="newsletter-error" class="hidden text-xs text-rose-400" role="alert"></p>
+          <p id="newsletter-error" class="hidden flex items-start gap-1.5 text-xs text-rose-400 leading-relaxed" role="alert"></p>
         </form>
       `;
       bindNewsletterForm();

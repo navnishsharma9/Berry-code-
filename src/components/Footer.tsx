@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { ArrowRight, CheckCircle2, Github, Linkedin, Twitter, Youtube } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
+import { AlertCircle, ArrowRight, CheckCircle2, Github, Linkedin, Twitter, Youtube } from 'lucide-react';
 import { ProductCategory } from '../data/products';
+import { validateSubscriptionEmail } from '../utils/emailValidation';
 
 interface FooterProps {
   onSelectCategory: (category: ProductCategory) => void;
@@ -12,15 +14,34 @@ export function Footer({ onSelectCategory, onNavigateHome }: FooterProps) {
   const [subscribedEmail, setSubscribedEmail] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const emailInputRef = useRef<HTMLInputElement | null>(null);
+  const successCardRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!subscribedEmail || !successCardRef.current) return;
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReduced) {
+      gsap.fromTo(
+        successCardRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.28, ease: 'power2.out', clearProps: 'transform,opacity' }
+      );
+    }
+  }, [subscribedEmail]);
+
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = email.trim();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setErrorMsg('Please enter a valid engineering or work email address.');
+    const result = validateSubscriptionEmail(email);
+    if (!result.valid) {
+      setErrorMsg(result.error ?? 'Please enter a valid email address.');
+      emailInputRef.current?.focus();
       return;
     }
+
     setErrorMsg(null);
-    setSubscribedEmail(trimmed);
+    setSubscribedEmail(result.normalizedEmail);
     setEmail('');
   };
 
@@ -147,29 +168,35 @@ export function Footer({ onSelectCategory, onNavigateHome }: FooterProps) {
             </p>
 
             {subscribedEmail ? (
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+              <div
+                ref={successCardRef}
+                role="status"
+                aria-live="polite"
+                className="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 space-y-2"
+              >
                 <div className="flex items-center gap-2 text-sm font-medium text-emerald-400">
                   <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>Subscribed for release notes</span>
+                  <span>Successfully subscribed to release notes</span>
                 </div>
-                <p className="text-xs text-slate-400">
-                  Confirmation sent to <span className="text-slate-200">{subscribedEmail}</span>.
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Confirmation sent to <span className="text-white font-medium">{subscribedEmail}</span>.
                 </p>
                 <button
                   type="button"
                   onClick={() => setSubscribedEmail(null)}
-                  className="text-xs text-slate-400 underline hover:text-white"
+                  className="text-xs text-slate-400 underline hover:text-white transition-colors"
                 >
                   Change email address
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} noValidate className="space-y-2">
+              <form onSubmit={handleSubscribe} noValidate className="space-y-2.5">
                 <div className="flex flex-col sm:flex-row gap-2">
                   <label htmlFor="newsletter-email" className="sr-only">
                     Email address
                   </label>
                   <input
+                    ref={emailInputRef}
                     id="newsletter-email"
                     type="email"
                     value={email}
@@ -177,8 +204,14 @@ export function Footer({ onSelectCategory, onNavigateHome }: FooterProps) {
                       setEmail(e.target.value);
                       if (errorMsg) setErrorMsg(null);
                     }}
-                    placeholder="engineer@company.com"
-                    className="w-full sm:flex-1 h-11 min-h-[44px] py-2.5 px-4 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-rose-500 focus-visible:ring-2 focus-visible:ring-rose-500 transition-colors"
+                    placeholder="name@gmail.com or work@domain.com"
+                    aria-invalid={Boolean(errorMsg)}
+                    aria-describedby={errorMsg ? 'newsletter-error' : undefined}
+                    className={`w-full sm:flex-1 h-11 min-h-[44px] py-2.5 px-4 rounded-lg bg-slate-900 border text-sm text-white placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 transition-colors ${
+                      errorMsg
+                        ? 'border-rose-500 focus:border-rose-500 focus-visible:ring-rose-500'
+                        : 'border-slate-700 focus:border-rose-500 focus-visible:ring-rose-500'
+                    }`}
                   />
                   <button
                     type="submit"
@@ -189,8 +222,13 @@ export function Footer({ onSelectCategory, onNavigateHome }: FooterProps) {
                   </button>
                 </div>
                 {errorMsg && (
-                  <p className="text-xs text-rose-400" role="alert">
-                    {errorMsg}
+                  <p
+                    id="newsletter-error"
+                    className="flex items-start gap-1.5 text-xs text-rose-400 leading-relaxed"
+                    role="alert"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+                    <span>{errorMsg}</span>
                   </p>
                 )}
               </form>
