@@ -192,8 +192,8 @@ export function ProductDetailPage({
           </div>
 
           {/* Right Sticky Purchase Module & Technical Spec Table */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
+          <div className="lg:col-span-5 min-w-0 space-y-6">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-8">
               <div className="flex items-center justify-between gap-3 text-xs text-slate-500 mb-2">
                 <span>{product.category}</span>
                 <span className="font-mono text-slate-400">
@@ -234,14 +234,14 @@ export function ProductDetailPage({
                         key={variant.id}
                         type="button"
                         onClick={() => setSelectedVariantId(variant.id)}
-                        className={`flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 ${
+                        className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 ${
                           isSelected
                             ? 'bg-slate-900 border-slate-900 text-white'
                             : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300'
                         }`}
                       >
                         <span className="text-sm font-medium">{variant.label}</span>
-                        <span className="font-mono text-sm font-bold tabular-nums">
+                        <span className="font-mono text-sm font-bold tabular-nums shrink-0">
                           ${variant.price}
                         </span>
                       </button>
@@ -251,13 +251,13 @@ export function ProductDetailPage({
               </div>
 
               {/* Quantity & Add to Cart */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="inline-flex items-center border border-slate-200 rounded-lg bg-slate-50 h-12">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+                <div className="w-full sm:w-auto inline-flex items-center justify-between sm:justify-start border border-slate-200 rounded-lg bg-slate-50 h-12 shrink-0">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     aria-label="Decrease quantity"
-                    className="w-11 h-full flex items-center justify-center text-slate-600 hover:text-slate-900"
+                    className="w-12 sm:w-11 h-full flex items-center justify-center text-slate-600 hover:text-slate-900"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
@@ -268,7 +268,7 @@ export function ProductDetailPage({
                     type="button"
                     onClick={() => setQuantity((q) => Math.min(99, q + 1))}
                     aria-label="Increase quantity"
-                    className="w-11 h-full flex items-center justify-center text-slate-600 hover:text-slate-900"
+                    className="w-12 sm:w-11 h-full flex items-center justify-center text-slate-600 hover:text-slate-900"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -277,7 +277,7 @@ export function ProductDetailPage({
                 <button
                   type="button"
                   onClick={handleAdd}
-                  className={`flex-1 inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 ${
+                  className={`w-full sm:flex-1 min-w-0 inline-flex items-center justify-center gap-2 h-12 px-4 sm:px-6 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 ${
                     addedFeedback
                       ? 'bg-emerald-700 text-white'
                       : 'bg-rose-600 text-white hover:bg-rose-700'

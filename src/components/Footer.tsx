@@ -178,11 +178,11 @@ export function Footer({ onSelectCategory, onNavigateHome }: FooterProps) {
                       if (errorMsg) setErrorMsg(null);
                     }}
                     placeholder="engineer@company.com"
-                    className="flex-1 h-11 px-3.5 rounded-lg bg-slate-900 border border-slate-800 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-slate-600 focus-visible:ring-2 focus-visible:ring-rose-500"
+                    className="w-full sm:flex-1 h-11 min-h-[44px] py-2.5 px-4 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-rose-500 focus-visible:ring-2 focus-visible:ring-rose-500 transition-colors"
                   />
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-1.5 h-11 px-5 rounded-lg bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition-colors whitespace-nowrap shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 h-11 min-h-[44px] px-5 rounded-lg bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition-colors whitespace-nowrap shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                   >
                     <span>Subscribe</span>
                     <ArrowRight className="w-4 h-4" aria-hidden="true" />

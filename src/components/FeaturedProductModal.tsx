@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
 import { ArrowRight, Check, CheckCircle2, ShoppingBag, X } from 'lucide-react';
 import { Product } from '../data/products';
 import { HardwareImage } from './HardwareImage';
@@ -19,10 +20,44 @@ export function FeaturedProductModal({
   const [selectedVariantId, setSelectedVariantId] = useState<string>('');
   const [addedFeedback, setAddedFeedback] = useState(false);
 
+  const backdropRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (product) {
       setSelectedVariantId(product.variants[0]?.id ?? '');
       setAddedFeedback(false);
+    }
+  }, [product]);
+
+  useEffect(() => {
+    if (!product) return;
+
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!prefersReduced && backdropRef.current && panelRef.current) {
+      const ctx = gsap.context(() => {
+        gsap.fromTo(
+          backdropRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.22, ease: 'power2.out' }
+        );
+        gsap.fromTo(
+          panelRef.current,
+          { opacity: 0, y: 24, scale: 0.96 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.34,
+            ease: 'power3.out',
+            clearProps: 'transform,opacity',
+          }
+        );
+      });
+      return () => ctx.revert();
     }
   }, [product]);
 
@@ -49,6 +84,7 @@ export function FeaturedProductModal({
 
   return (
     <div
+      ref={backdropRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/60 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
@@ -56,20 +92,21 @@ export function FeaturedProductModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col lg:grid lg:grid-cols-12"
+        ref={panelRef}
+        className="relative w-full max-w-4xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-y-auto lg:overflow-hidden max-h-[90vh] flex flex-col lg:grid lg:grid-cols-12"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Close product preview"
-          className="absolute top-3 right-3 z-10 inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white/90 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600"
+          className="absolute top-3 right-3 z-10 inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white/95 text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Left Image Column */}
-        <div className="lg:col-span-6 bg-slate-100 flex items-center justify-center min-h-[220px] sm:min-h-[280px]">
+        <div className="lg:col-span-6 bg-slate-100 flex items-center justify-center h-56 sm:h-72 lg:h-full shrink-0">
           <HardwareImage
             src={product.image}
             alt={product.imageAlt}
@@ -79,7 +116,7 @@ export function FeaturedProductModal({
         </div>
 
         {/* Right Quick Spec & Action Column */}
-        <div className="lg:col-span-6 p-6 sm:p-8 overflow-y-auto flex flex-col justify-between gap-6">
+        <div className="lg:col-span-6 p-5 sm:p-8 lg:overflow-y-auto flex flex-col justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 pr-10">
               <span>{product.kicker}</span>
@@ -158,11 +195,11 @@ export function FeaturedProductModal({
           </div>
 
           {/* Modal Action Footer */}
-          <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row gap-3">
+          <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row gap-3 shrink-0">
             <button
               type="button"
               onClick={handleAdd}
-              className={`flex-1 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 ${
+              className={`w-full sm:flex-1 h-11 min-h-[44px] shrink-0 inline-flex items-center justify-center gap-2 px-5 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 ${
                 addedFeedback
                   ? 'bg-emerald-700 text-white'
                   : 'bg-rose-600 text-white hover:bg-rose-700'
@@ -187,7 +224,7 @@ export function FeaturedProductModal({
                 onClose();
                 onOpenProductPage(product.id);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm font-medium hover:bg-slate-50 transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600"
+              className="w-full sm:flex-1 h-11 min-h-[44px] shrink-0 inline-flex items-center justify-center gap-2 px-5 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm font-medium hover:bg-slate-50 transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600"
             >
               <span>Full Product Page</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
